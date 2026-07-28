@@ -13,7 +13,7 @@ from splunklib import modularinput as smi
 
 
 ADDON_NAME = "TA-usm-snyk-addon"
-SNYK_TOKEN_URL = "https://api.snyk.io/oauth/token"
+SNYK_TOKEN_URL = "https://api.snyk.io/oauth2/token"
 SNYK_API_BASE = "https://api.snyk.io"
 
 
@@ -153,12 +153,12 @@ def stream_events(inputs: smi.InputDefinition, event_writer: smi.EventWriter):
 
             event_count = 0
             pages_fetched = 0
-            sourcetype = "snyk:audit_log"
+            sourcetype = "snyk:audit:log"
 
             while next_url:
                 page = api_get(next_url, access_token, logger)
-
-                for record in page.get("data", []):
+                items = page.get("data", {}).get("items", [])
+                for record in items:
                     event_writer.write_event(
                         smi.Event(
                             data=json.dumps(record, ensure_ascii=False, default=str),
@@ -189,6 +189,7 @@ def stream_events(inputs: smi.InputDefinition, event_writer: smi.EventWriter):
                 index,
                 account=account_name,
             )
+
             log.modular_input_end(logger, normalized_input_name)
 
         except Exception as e:
