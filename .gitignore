@@ -1,2 +1,6 @@
-# cache and other artifacts produced by Lean's Lake build tool
-.lake/
+# .gitignore
+local/passwords.conf
+local/app.conf
+*.pyc
+__pycache__/
+.DS_Store
