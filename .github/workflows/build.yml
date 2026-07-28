@@ -1,0 +1,53 @@
+name: Build Snyk TA
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install ucc-gen
+        run: pip install "splunk-add-on-ucc-framework[validate]"
+
+      - name: Build
+        run: ucc-gen build --ta-version 1.0.0
+
+      - name: Validate (AppInspect)
+        run: ucc-gen validate --addon-path output/TA-usm-snyk-addon
+
+      - name: Package
+        run: ucc-gen package --path output/TA-usm-snyk-addon
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: TA-usm-snyk-addon
+          path: "*.tar.gz"
+
+  release:
+    needs: build-and-validate
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install splunk-add-on-ucc-framework
+      - run: ucc-gen build --ta-version ${{ github.ref_name }}
+      - run: ucc-gen package --path output/TA-usm-snyk-addon
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: "*.tar.gz"

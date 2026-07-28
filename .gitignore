@@ -1,6 +1,14 @@
-# .gitignore
-local/passwords.conf
-local/app.conf
-*.pyc
+# Build output -- fully regenerated from source via `ucc-gen build`
+output/
+
+# Packaged artifacts -- produced by `ucc-gen package`, also regenerated
+*.tar.gz
+*.spl
+
+# Python bytecode
 __pycache__/
-.DS_Store
+*.pyc
+
+# Local venv, if you build locally too
+.venv/
+venv/
