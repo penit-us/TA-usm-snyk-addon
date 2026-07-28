@@ -369,6 +369,10 @@
                         "field": "name"
                     },
                     {
+                        "label": "Type",
+                        "field": "type"
+                    },
+                    {
                         "label": "Interval",
                         "field": "interval"
                     },
