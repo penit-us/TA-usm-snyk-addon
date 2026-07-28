@@ -243,6 +243,218 @@
                     ],
                     "inputHelperModule": "snyk_audit_logs_helper",
                     "title": "snyk_audit_logs"
+                },
+                {
+                    "name": "snyk_issues",
+                    "entity": [
+                        {
+                            "type": "text",
+                            "label": "Name",
+                            "validators": [
+                                {
+                                    "type": "regex",
+                                    "errorMsg": "Input Name must begin with a letter and consist exclusively of alphanumeric characters and underscores.",
+                                    "pattern": "^[a-zA-Z]\\w*$"
+                                },
+                                {
+                                    "type": "string",
+                                    "errorMsg": "Length of input name should be between 1 and 100",
+                                    "minLength": 1,
+                                    "maxLength": 100
+                                }
+                            ],
+                            "field": "name",
+                            "help": "A unique name for the data input.",
+                            "required": true
+                        },
+                        {
+                            "type": "text",
+                            "field": "interval",
+                            "label": "Interval",
+                            "validators": [
+                                {
+                                    "type": "regex",
+                                    "errorMsg": "Interval must be either a non-negative number, CRON interval or -1.",
+                                    "pattern": "^((?:-1|\\d+(?:\\.\\d+)?)|(([\\*\\d{1,2}\\,\\-\\/]+\\s){4}[\\*\\d{1,2}\\,\\-\\/]+))$"
+                                },
+                                {
+                                    "type": "number",
+                                    "range": [
+                                        10,
+                                        86400
+                                    ],
+                                    "errorMsg": "Interval must be between 10 and 86400"
+                                }
+                            ],
+                            "help": "Time interval of the data input, in seconds.",
+                            "required": true,
+                            "defaultValue": "900"
+                        },
+                        {
+                            "type": "singleSelect",
+                            "field": "index",
+                            "label": "Index",
+                            "defaultValue": "default",
+                            "options": {
+                                "endpointUrl": "data/indexes?search=isInternal=0+disabled=0",
+                                "denyList": "^_.*$",
+                                "createSearchChoice": true
+                            },
+                            "validators": [
+                                {
+                                    "type": "index_name"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "singleSelect",
+                            "label": "Account to use",
+                            "options": {
+                                "referenceName": "account"
+                            },
+                            "help": "Account to use for this input.",
+                            "field": "account",
+                            "required": true,
+                            "validators": [
+                                {
+                                    "type": "string",
+                                    "errorMsg": "Length of account name should be between 1 and 100",
+                                    "minLength": 1,
+                                    "maxLength": 100
+                                }
+                            ]
+                        },
+                        {
+                            "type": "text",
+                            "label": "API Version",
+                            "field": "version",
+                            "help": "Snyk REST API version, e.g. 2026-03-25.",
+                            "required": true,
+                            "defaultValue": "2026-03-25"
+                        },
+                        {
+                            "type": "text",
+                            "label": "Updated After",
+                            "field": "updated_after",
+                            "help": "Optional. ISO-8601 timestamp. Used only if no checkpoint exists yet for this group; defaults to last 7 days if left blank.",
+                            "required": false
+                        },
+                        {
+                            "type": "text",
+                            "label": "Page Limit",
+                            "field": "page_limit",
+                            "help": "Optional. Max pages fetched per org per run. Leave blank or 0 for unlimited.",
+                            "required": false
+                        }
+                    ],
+                    "inputHelperModule": "snyk_issues_helper",
+                    "title": "snyk_issues"
+                },
+                {
+                    "name": "snyk_projects",
+                    "entity": [
+                        {
+                            "type": "text",
+                            "label": "Name",
+                            "validators": [
+                                {
+                                    "type": "regex",
+                                    "errorMsg": "Input Name must begin with a letter and consist exclusively of alphanumeric characters and underscores.",
+                                    "pattern": "^[a-zA-Z]\\w*$"
+                                },
+                                {
+                                    "type": "string",
+                                    "errorMsg": "Length of input name should be between 1 and 100",
+                                    "minLength": 1,
+                                    "maxLength": 100
+                                }
+                            ],
+                            "field": "name",
+                            "help": "A unique name for the data input.",
+                            "required": true
+                        },
+                        {
+                            "type": "text",
+                            "field": "interval",
+                            "label": "Interval",
+                            "validators": [
+                                {
+                                    "type": "regex",
+                                    "errorMsg": "Interval must be either a non-negative number, CRON interval or -1.",
+                                    "pattern": "^((?:-1|\\d+(?:\\.\\d+)?)|(([\\*\\d{1,2}\\,\\-\\/]+\\s){4}[\\*\\d{1,2}\\,\\-\\/]+))$"
+                                },
+                                {
+                                    "type": "number",
+                                    "range": [
+                                        10,
+                                        86400
+                                    ],
+                                    "errorMsg": "Interval must be between 10 and 86400"
+                                }
+                            ],
+                            "help": "Time interval of the data input, in seconds.",
+                            "required": true,
+                            "defaultValue": "3600"
+                        },
+                        {
+                            "type": "singleSelect",
+                            "field": "index",
+                            "label": "Index",
+                            "defaultValue": "default",
+                            "options": {
+                                "endpointUrl": "data/indexes?search=isInternal=0+disabled=0",
+                                "denyList": "^_.*$",
+                                "createSearchChoice": true
+                            },
+                            "validators": [
+                                {
+                                    "type": "index_name"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "singleSelect",
+                            "label": "Account to use",
+                            "options": {
+                                "referenceName": "account"
+                            },
+                            "help": "Account to use for this input.",
+                            "field": "account",
+                            "required": true,
+                            "validators": [
+                                {
+                                    "type": "string",
+                                    "errorMsg": "Length of account name should be between 1 and 100",
+                                    "minLength": 1,
+                                    "maxLength": 100
+                                }
+                            ]
+                        },
+                        {
+                            "type": "text",
+                            "label": "API Version",
+                            "field": "version",
+                            "help": "Snyk REST API version, e.g. 2026-03-25.",
+                            "required": true,
+                            "defaultValue": "2026-03-25"
+                        },
+                        {
+                            "type": "text",
+                            "label": "Updated After",
+                            "field": "updated_after",
+                            "help": "Optional. ISO-8601 timestamp filter, if supported by your Snyk API version. Leave blank to always collect the full current project list per org.",
+                            "required": false
+                        },
+                        {
+                            "type": "text",
+                            "label": "Page Limit",
+                            "field": "page_limit",
+                            "help": "Optional. Max pages fetched per org per run. Leave blank or 0 for unlimited.",
+                            "required": false
+                        }
+                    ],
+                    "inputHelperModule": "snyk_projects_helper",
+                    "title": "snyk_projects"
                 }
             ],
             "title": "Inputs",

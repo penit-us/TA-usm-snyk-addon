@@ -7,14 +7,13 @@ from splunklib import modularinput as smi
 
 import snyk_common as sc
 
-INPUT_TYPE = "snyk_audit_logs"
-SOURCETYPE = "snyk:audit:log"
-DEFAULT_LOOKBACK_HOURS = 24
+INPUT_TYPE = "snyk_projects"
+SOURCETYPE = "snyk:rest:project"
 
 
 def extract_items(page: dict):
-    """Audit Logs nests its record list under data.items (confirmed against Snyk docs)."""
-    return page.get("data", {}).get("items", [])
+    """Projects follows standard JSON:API -- data is a flat array of {id, type, attributes}."""
+    return page.get("data", [])
 
 
 def validate_input(definition: smi.ValidationDefinition):
@@ -60,51 +59,56 @@ def stream_events(inputs: smi.InputDefinition, event_writer: smi.EventWriter):
                 )
                 continue
 
-            # --- Checkpoint (per input stanza + group) ----------------------------
             checkpointer = sc.get_checkpointer(inputs.metadata["checkpoint_dir"])
-            checkpoint_key = f"{normalized_input_name}_{group_id}"
-            state = checkpointer.get(checkpoint_key) or {}
-
-            default_lookback = (
-                datetime.datetime.utcnow() - datetime.timedelta(hours=DEFAULT_LOOKBACK_HOURS)
-            ).strftime("%Y-%m-%dT%H:%M:%SZ")
-            updated_after = state.get("last_updated_after") or updated_after_param or default_lookback
-            run_started_at = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
 
             # --- OAuth2 token exchange ---------------------------------------------
             access_token = sc.get_oauth_token(client_id, client_secret, logger)
 
-            # --- Opportunistic discovery: refresh KV Store org/project inventory ---
-            sc.discover_group(session_key, group_id, access_token, version, logger)
+            # --- Orgs for this group: KV Store first, live discovery as fallback ----
+            orgs = sc.get_orgs_with_fallback(session_key, group_id, access_token, version, logger)
 
-            # --- Paginated collection ------------------------------------------------
-            start_url = (
-                f"{sc.SNYK_API_BASE}/rest/groups/{group_id}/audit_logs/search"
-                f"?version={version}&from={updated_after}&limit=100"
-            )
+            if not orgs:
+                logger.warning(f"No orgs found for group {group_id}; nothing to collect.")
+                log.modular_input_end(logger, normalized_input_name)
+                continue
 
-            event_count = 0
-            for record in sc.paginate(start_url, access_token, logger, extract_items, page_limit=page_limit):
-                event_writer.write_event(
-                    smi.Event(
-                        data=json.dumps(record, ensure_ascii=False, default=str),
-                        index=index,
-                        sourcetype=SOURCETYPE,
-                        source=f"snyk://group/{group_id}/audit_logs",
-                    )
+            # --- Collect projects per org ---------------------------------------------
+            for org in orgs:
+                org_id = org["id"]
+                checkpoint_key = f"{normalized_input_name}_{org_id}"
+                run_started_at = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+
+                start_url = f"{sc.SNYK_API_BASE}/rest/orgs/{org_id}/projects?version={version}&limit=100"
+                if updated_after_param:
+                    start_url += f"&updated_after={updated_after_param}"
+
+                event_count = 0
+                try:
+                    for record in sc.paginate(
+                        start_url, access_token, logger, extract_items, page_limit=page_limit
+                    ):
+                        event_writer.write_event(
+                            smi.Event(
+                                data=json.dumps(record, ensure_ascii=False, default=str),
+                                index=index,
+                                sourcetype=SOURCETYPE,
+                                source=f"snyk://group/{group_id}/org/{org_id}/projects",
+                            )
+                        )
+                        event_count += 1
+                except Exception as e:
+                    logger.error(f"org={org_id}: {e}")
+                    continue
+
+                checkpointer.update(checkpoint_key, {"last_run_at": run_started_at})
+                log.events_ingested(
+                    logger, input_name, SOURCETYPE, event_count, index, account=account_name,
                 )
-                event_count += 1
 
-            # --- Advance checkpoint only after a fully successful pull ---------------
-            checkpointer.update(checkpoint_key, {"last_updated_after": run_started_at})
-
-            log.events_ingested(
-                logger, input_name, SOURCETYPE, event_count, index, account=account_name,
-            )
             log.modular_input_end(logger, normalized_input_name)
 
         except Exception as e:
             log.log_exception(
-                logger, e, "snyk_audit_logs_error",
-                msg_before=f"Exception raised while collecting Snyk audit logs for {normalized_input_name}: "
+                logger, e, "snyk_projects_error",
+                msg_before=f"Exception raised while collecting Snyk projects for {normalized_input_name}: "
             )

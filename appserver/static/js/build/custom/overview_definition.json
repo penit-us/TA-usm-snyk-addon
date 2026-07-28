@@ -102,7 +102,7 @@
     "overview_data_volume_ds": {
       "type": "ds.search",
       "options": {
-        "query": "index=_internal source=*license_usage.log type=Usage (s IN (snyk_audit_logs*)) | timechart sum(b) as Usage | rename Usage as \"Data volume\" | join _time [search index=_internal source=*ta-usm-snyk-addon* action=events_ingested | timechart sum(n_events) as \"Number of events\" ]",
+        "query": "index=_internal source=*license_usage.log type=Usage (s IN (snyk_audit_logs*,snyk_issues*,snyk_projects*)) | timechart sum(b) as Usage | rename Usage as \"Data volume\" | join _time [search index=_internal source=*ta-usm-snyk-addon* action=events_ingested | timechart sum(n_events) as \"Number of events\" ]",
         "queryParameters": {
           "earliest": "$overview_time.earliest$",
           "latest": "$overview_time.latest$"

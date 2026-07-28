@@ -73,7 +73,7 @@
     "data_ingestion_modal_data_volume_ds": {
       "type": "ds.search",
       "options": {
-        "query": "index=_internal source=*license_usage.log type=Usage (s IN (snyk_audit_logs*)) | timechart sum(b) as Usage | rename Usage as \"Data volume\"",
+        "query": "index=_internal source=*license_usage.log type=Usage (s IN (snyk_audit_logs*,snyk_issues*,snyk_projects*)) | timechart sum(b) as Usage | rename Usage as \"Data volume\"",
         "queryParameters": {
           "earliest": "$data_ingestion_modal_time.earliest$",
           "latest": "$data_ingestion_modal_time.latest$"
