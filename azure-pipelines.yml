@@ -1,0 +1,33 @@
+trigger:
+  branches:
+    include:
+      - main
+  tags:
+    include:
+      - v*
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '3.12'
+
+  - script: pip install "splunk-add-on-ucc-framework[validate]"
+    displayName: 'Install ucc-gen'
+
+  - script: ucc-gen build --ta-version 1.0.0
+    displayName: 'Build'
+
+  - script: ucc-gen validate --addon-path output/TA-usm-snyk-addon
+    displayName: 'Validate (AppInspect)'
+
+  - script: ucc-gen package --path output/TA-usm-snyk-addon
+    displayName: 'Package'
+
+  - task: PublishBuildArtifacts@1
+    inputs:
+      pathToPublish: '$(System.DefaultWorkingDirectory)'
+      artifactName: 'TA-usm-snyk-addon'
+    condition: succeededOrFailed()
